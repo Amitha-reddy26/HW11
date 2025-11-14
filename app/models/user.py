@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
 import uuid
 from typing import Optional, Dict, Any
+from app.db.base import Base
+
 
 from sqlalchemy import Column, String, DateTime, Boolean
 from sqlalchemy.dialects.postgresql import UUID

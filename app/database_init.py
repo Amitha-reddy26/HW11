@@ -1,6 +1,7 @@
+from app.db.base import Base
+from app.models import user
 from app.database import engine
-from app.schemas.base import Base  
-from app.models import user       
+     
 
 def init_db():
     Base.metadata.create_all(bind=engine)
