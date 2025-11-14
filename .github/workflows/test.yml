@@ -9,13 +9,14 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+
     services:
       postgres:
         image: postgres:latest
         env:
           POSTGRES_USER: user
           POSTGRES_PASSWORD: password
-          POSTGRES_DB: mytestdb  # <-- Dedicated test DB name
+          POSTGRES_DB: mytestdb
         ports:
           - 5432:5432
         options: >-
@@ -23,21 +24,20 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+
     steps:
-      - uses: actions/checkout@v3
-      
-      - uses: actions/setup-python@v4
+      - name: Checkout repo into module10_is601
+        uses: actions/checkout@v3
+        with:
+          path: module10_is601
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-          
-      - uses: actions/cache@v3
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-      
+
       - name: Install dependencies
+        working-directory: module10_is601
         env:
           DATABASE_URL: postgresql://user:password@localhost:5432/mytestdb
         run: |
@@ -45,33 +45,39 @@ jobs:
           source venv/bin/activate
           pip install --upgrade pip
           pip install -r requirements.txt
-          playwright install  # if you use Playwright for e2e tests
-      
+
       - name: Run tests
+        working-directory: module10_is601
         env:
+          PYTHONPATH: ${{ github.workspace }}/module10_is601
           DATABASE_URL: postgresql://user:password@localhost:5432/mytestdb
         run: |
           source venv/bin/activate
-          
-          # 1) Unit tests
-          pytest tests/unit/ --cov=src --junitxml=test-results/junit.xml
-          
-          # 2) Integration tests
+
+          # Unit tests
+          pytest tests/unit/
+
+          # Integration tests
           pytest tests/integration/
-          
-          # 3) E2E or other tests
+
+          # E2E tests (optional)
           pytest tests/e2e/
+
 
   security:
     needs: test
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
-      
+        with:
+          path: module10_is601
+
       - name: Build image
+        working-directory: module10_is601
         run: docker build -t app:test .
-      
-      - name: Run Trivy vulnerability scanner
+
+      - name: Run Trivy vulnerability scan
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: 'app:test'
@@ -79,24 +85,29 @@ jobs:
           exit-code: '0'
           ignore-unfixed: true
           severity: 'CRITICAL,HIGH'
-  
+
+
   deploy:
     needs: security
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: production
+
     steps:
       - uses: actions/checkout@v4
-      
+        with:
+          path: module10_is601
+
       - uses: docker/setup-buildx-action@v3
-      
+
       - uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-          
+
       - uses: docker/build-push-action@v5
         with:
+          context: module10_is601
           push: true
           tags: |
             ab2609/hw10:latest
