@@ -3,7 +3,6 @@ import uuid
 from typing import Optional, Dict, Any
 from app.db.base import Base
 
-
 from sqlalchemy import Column, String, DateTime, Boolean
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
@@ -11,7 +10,8 @@ from passlib.context import CryptContext
 from jose import JWTError, jwt
 from pydantic import ValidationError
 
-from app.schemas.base import Base
+
+
 from app.schemas.user import UserCreate, UserResponse, Token
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -109,4 +109,11 @@ class User(Base):
         db.commit()
 
         user_response = UserResponse.model_validate(user)
-        token_resp_
+
+        token_resp = Token(
+            access_token=cls.create_access_token({"sub": str(user.id)}),
+            token_type="bearer",
+            user=user_response
+        )
+
+        return token_resp.model_dump()
