@@ -28,10 +28,8 @@ class User(Base):
     username = Column(String(50), unique=True, nullable=False, index=True)
     email = Column(String(120), unique=True, nullable=False, index=True)
 
-    # REAL DB COLUMN (tests require password_hash)
     password_hash = Column(String(255), nullable=False)
 
-    # ALIAS so tests using "password" still work
     @property
     def password(self):
         return self.password_hash
@@ -54,12 +52,18 @@ class User(Base):
         full_name = f"{self.first_name or ''} {self.last_name or ''}".strip()
         return f"<User(name={full_name}, email={self.email})>"
 
+
+
     @staticmethod
     def hash_password(password: str) -> str:
+        password = password[:72]
         return pwd_context.hash(password)
 
     def verify_password(self, plain_password: str) -> bool:
+        plain_password = plain_password[:72]
         return pwd_context.verify(plain_password, self.password_hash)
+
+
 
     @staticmethod
     def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
@@ -76,6 +80,7 @@ class User(Base):
             return uuid.UUID(user_id) if user_id else None
         except (JWTError, ValueError):
             return None
+
 
     @classmethod
     def register(cls, db, user_data: Dict[str, Any]):
@@ -107,7 +112,7 @@ class User(Base):
         db.add(new_user)
         db.flush()
         return new_user
-
+ 
     @classmethod
     def authenticate(cls, db, username: str, password: str):
         user = db.query(cls).filter(
