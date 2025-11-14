@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 import uuid
 from typing import Optional, Dict, Any
+
 from app.db.base import Base
 
 from sqlalchemy import Column, String, DateTime, Boolean
@@ -10,9 +11,8 @@ from passlib.context import CryptContext
 from jose import JWTError, jwt
 from pydantic import ValidationError
 
-
-
 from app.schemas.user import UserCreate, UserResponse, Token
+
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -27,7 +27,18 @@ class User(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     username = Column(String(50), unique=True, nullable=False, index=True)
     email = Column(String(120), unique=True, nullable=False, index=True)
+
+    # REAL DB COLUMN (tests require password_hash)
     password_hash = Column(String(255), nullable=False)
+
+    # ALIAS so tests using "password" still work
+    @property
+    def password(self):
+        return self.password_hash
+
+    @password.setter
+    def password(self, value):
+        self.password_hash = value
 
     first_name = Column(String(50), nullable=True)
     last_name = Column(String(50), nullable=True)
@@ -40,7 +51,8 @@ class User(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     def __repr__(self):
-        return f"<User(username={self.username}, email={self.email})>"
+        full_name = f"{self.first_name or ''} {self.last_name or ''}".strip()
+        return f"<User(name={full_name}, email={self.email})>"
 
     @staticmethod
     def hash_password(password: str) -> str:
