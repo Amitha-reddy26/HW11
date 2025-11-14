@@ -1,14 +1,14 @@
 from typing import Optional
 from uuid import UUID
 from datetime import datetime
-from pydantic import BaseModel, EmailStr, ConfigDict
+from pydantic import BaseModel, EmailStr, ConfigDict, Field
 
 
 class UserCreate(BaseModel):
     """Schema for creating a new user"""
     username: str
     email: EmailStr
-    password: str
+    password: str = Field(min_length=6, description="Password must be at least 6 characters long")
 
     # Optional personal info
     first_name: Optional[str] = None
