@@ -35,7 +35,7 @@ jobs:
       # Checkout repo
       - uses: actions/checkout@v3
 
-      # Python
+      # Setup Python
       - uses: actions/setup-python@v4
         with:
           python-version: '3.10'
@@ -48,21 +48,28 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      # Install dependencies + Playwright inside venv
+      # Install all dependencies inside venv
       - name: Install dependencies
         env:
           DATABASE_URL: postgresql://user:password@localhost:5432/mytestdb
         run: |
           python -m venv venv
           source venv/bin/activate
+
+          # Upgrade pip
           pip install --upgrade pip
+
+          # Install project dependencies
           pip install --use-deprecated=legacy-resolver -r requirements.txt
 
-          # Install Playwright package + browsers (Chromium)
+          # Install pytest (NOT included in your requirements.txt)
+          pip install pytest pytest-cov
+
+          # Install Playwright + browsers inside venv
           pip install playwright
           python -m playwright install --with-deps chromium
 
-      # Run tests
+      # Run all test suites
       - name: Run tests
         env:
           DATABASE_URL: postgresql://user:password@localhost:5432/mytestdb
@@ -77,6 +84,7 @@ jobs:
 
           # End-to-end tests
           pytest tests/e2e/ --junitxml=test-results/e2e.xml
+
 
   # ------------------------ SECURITY SCAN ------------------------
   security:
@@ -99,7 +107,8 @@ jobs:
           ignore-unfixed: true
           severity: "CRITICAL,HIGH"
 
-  # ------------------------ DEPLOYMENT ------------------------
+
+  # ------------------------ DEPLOY ------------------------
   deploy:
     if: github.ref == 'refs/heads/main' && github.event.inputs.skip_security != 'true'
     needs: security
