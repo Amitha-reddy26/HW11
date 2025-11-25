@@ -20,7 +20,7 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready
+          --health-cmd pg_isready -U user -d mytestdb
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -47,14 +47,22 @@ jobs:
           source venv/bin/activate
           pip install --upgrade pip
           pip install -r requirements.txt
-          # FIX: install browsers inside venv
-          python -m playwright install --with-deps
+
+          # 🔥 FIX: Install Playwright + browsers INSIDE THE VENV
+          pip install playwright
+          playwright install --with-deps chromium
 
       - name: Run tests
         env:
           DATABASE_URL: postgresql://user:password@localhost:5432/mytestdb
         run: |
           source venv/bin/activate
-          pytest tests/unit/ --cov=src --junitxml=test-results/junit.xml
-          pytest tests/integration/
-          pytest tests/e2e/
+
+          # Unit tests
+          pytest tests/unit/ --junitxml=test-results/unit.xml
+
+          # Integration tests
+          pytest tests/integration/ --junitxml=test-results/integration.xml
+
+          # E2E tests
+          pytest tests/e2e/ --junitxml=test-results/e2e.xml
