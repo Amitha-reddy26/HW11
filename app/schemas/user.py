@@ -1,47 +1,25 @@
 from typing import Optional
 from uuid import UUID
 from datetime import datetime
-from pydantic import BaseModel, EmailStr, ConfigDict, Field
-
-
-class UserCreate(BaseModel):
-    """Schema for creating a new user"""
-    username: str
-    email: EmailStr
-    password: str = Field(min_length=6, description="Password must be at least 6 characters long")
-
-    # Optional personal info
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
-
+from pydantic import BaseModel, EmailStr, ConfigDict
 
 class UserResponse(BaseModel):
     """Schema for user response data"""
     id: UUID
     username: str
     email: EmailStr
-    first_name: Optional[str]
-    last_name: Optional[str]
+    first_name: str
+    last_name: str
     is_active: bool
     is_verified: bool
     created_at: datetime
     updated_at: datetime
 
-    model_config = ConfigDict(from_attributes=True)
-
-
-class UserRead(BaseModel):
-    """Minimal safe user details (no password_hash)"""
-    id: UUID
-    username: str
-    email: EmailStr
-    created_at: datetime
-
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True)  
 
 
 class Token(BaseModel):
-    """Authentication token response"""
+    """Schema for authentication token response"""
     access_token: str
     token_type: str = "bearer"
     user: UserResponse
@@ -49,7 +27,7 @@ class Token(BaseModel):
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
-                "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
                 "token_type": "bearer",
                 "user": {
                     "id": "123e4567-e89b-12d3-a456-426614174000",
@@ -68,7 +46,7 @@ class Token(BaseModel):
 
 
 class TokenData(BaseModel):
-    """Payload inside JWT token"""
+    """Schema for JWT token payload"""
     user_id: Optional[UUID] = None
 
 
