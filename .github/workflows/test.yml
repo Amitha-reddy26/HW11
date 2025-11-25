@@ -32,15 +32,15 @@ jobs:
           --health-retries 5
 
     steps:
-      # Checkout repo
+      # Checkout repository
       - uses: actions/checkout@v3
 
-      # Setup Python
+      # Setup Python version
       - uses: actions/setup-python@v4
         with:
           python-version: '3.10'
 
-      # Cache pip installs
+      # Cache dependencies
       - uses: actions/cache@v3
         with:
           path: ~/.cache/pip
@@ -48,7 +48,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      # Install dependencies inside virtualenv
+      # Install dependencies + Playwright inside virtualenv
       - name: Install dependencies
         env:
           DATABASE_URL: postgresql://user:password@localhost:5432/mytestdb
@@ -62,13 +62,13 @@ jobs:
           pip install --use-deprecated=legacy-resolver -r requirements.txt
 
           # Install missing test dependencies
-          pip install pytest pytest-cov requests
+          pip install pytest pytest-cov requests faker
 
           # Install Playwright + Chromium browser
           pip install playwright
           python -m playwright install --with-deps chromium
 
-      # Run tests
+      # Run test suites
       - name: Run tests
         env:
           DATABASE_URL: postgresql://user:password@localhost:5432/mytestdb
@@ -81,7 +81,7 @@ jobs:
           # Integration tests
           pytest tests/integration/ --junitxml=test-results/integration.xml
 
-          # End-to-end Playwright tests
+          # E2E Playwright tests
           pytest tests/e2e/ --junitxml=test-results/e2e.xml
 
 
