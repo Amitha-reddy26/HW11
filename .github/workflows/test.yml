@@ -40,7 +40,7 @@ jobs:
         with:
           python-version: '3.10'
 
-      # Cache pip
+      # Cache pip installs
       - uses: actions/cache@v3
         with:
           path: ~/.cache/pip
@@ -48,7 +48,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      # Install all dependencies inside venv
+      # Install dependencies inside virtualenv
       - name: Install dependencies
         env:
           DATABASE_URL: postgresql://user:password@localhost:5432/mytestdb
@@ -56,20 +56,19 @@ jobs:
           python -m venv venv
           source venv/bin/activate
 
-          # Upgrade pip
           pip install --upgrade pip
 
           # Install project dependencies
           pip install --use-deprecated=legacy-resolver -r requirements.txt
 
-          # Install pytest (NOT included in your requirements.txt)
-          pip install pytest pytest-cov
+          # Install missing test dependencies
+          pip install pytest pytest-cov requests
 
-          # Install Playwright + browsers inside venv
+          # Install Playwright + Chromium browser
           pip install playwright
           python -m playwright install --with-deps chromium
 
-      # Run all test suites
+      # Run tests
       - name: Run tests
         env:
           DATABASE_URL: postgresql://user:password@localhost:5432/mytestdb
@@ -82,7 +81,7 @@ jobs:
           # Integration tests
           pytest tests/integration/ --junitxml=test-results/integration.xml
 
-          # End-to-end tests
+          # End-to-end Playwright tests
           pytest tests/e2e/ --junitxml=test-results/e2e.xml
 
 
